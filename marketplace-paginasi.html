@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Marketplace Digital - VIVE</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    body {
+      margin: 0;
+      background: #f9fafb;
+      color: #111827;
+    }
+    header {
+      background-color: #1f2937;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      text-align: center;
+    }
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+    }
+    .header-bottom {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+    .search {
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+      width: 100%;
+      max-width: 250px;
+    }
+    .cart-btn {
+      background: #2563eb;
+      color: white;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+    .product-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease;
+    }
+    .product-card:hover {
+      transform: scale(1.01);
+    }
+    .product-card img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+    }
+    .product-info {
+      padding: 12px;
+      flex-grow: 1;
+    }
+    .product-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .product-price {
+      color: #16a34a;
+      font-size: 15px;
+    }
+    .buy-btn {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px;
+      border-radius: 8px;
+      margin-top: 10px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .pagination {
+      text-align: center;
+      padding: 20px;
+    }
+    .pagination button {
+      padding: 6px 12px;
+      margin: 0 4px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #cartModal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+      display: none;
+      z-index: 999;
+    }
+    .cart-item {
+      margin-bottom: 10px;
+      font-size: 15px;
+    }
+    .cart-item button {
+      margin-left: 10px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111827;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      display: none;
+      z-index: 1000;
+    }
+    footer {
+      background: #111827;
+      color: white;
+      text-align: center;
+      padding: 15px;
+      font-size: 14px;
+    }
+
+    @media (min-width: 600px) {
+      .header-bottom {
+        flex-direction: row;
+        justify-content: center;
+      }
+      .search {
+        max-width: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <img src="VG.png" alt="Logo" class="logo">
+    <h1>VIVE DIGITAL</h1>
+  </div>
+  <div class="header-bottom">
+    <input type="text" class="search" id="searchInput" placeholder="Cari produk..." oninput="renderProducts()">
+    <button class="cart-btn" onclick="openCart()">🛒 (<span id="cartCount">0</span>)</button>
+  </div>
+</header>
+
+<div class="product-grid" id="productGrid"></div>
+<div class="pagination" id="pagination"></div>
+
+<div id="cartModal">
+  <h3>Keranjang Belanja</h3>
+  <div id="cartItems"></div>
+  <p id="cartTotal"></p>
+  <button onclick="closeCart()" class="buy-btn" style="background:#e11d48;">Tutup</button>
+</div>
+
+<div id="toast"></div>
+
+<footer>
+  &copy; 2025 VIVE DIGITAL. Semua Hak Dilindungi.
+</footer>
+
+<script>
+  const products = [
+    { name: "Canva premium (1 tahun)", price: 5000, img: "Canva.jpg" },
+    { name: "Alight motion (premium 1 tahun)", price: 5000, img: "am.jpg" },
+    { name: "Capcut premium (1 tahun)", price: 5000, img: "cc.jpg" },
+    { name: "Wink premium", price: 5000, img: "wink.jpg" },
+    { name: "Viu premium (1 bulan)", price: 10000, img: "viu.jpg" },
+    { name: "netflix premium (1 bulan)", price: 10000, img: "netflix.jpg" },
+    { name: "spotify premium (1 tahun)", price: 10000, img: "spotify.jpg" }
+  ];
+
+  let cart = [];
+  let currentPage = 1;
+  const itemsPerPage = 4;
+
+  function renderProducts() {
+    const search = document.getElementById("searchInput").value.toLowerCase();
+    const filtered = products.filter(p => p.name.toLowerCase().includes(search));
+    const start = (currentPage - 1) * itemsPerPage;
+    const paginated = filtered.slice(start, start + itemsPerPage);
+    const grid = document.getElementById("productGrid");
+
+    grid.innerHTML = paginated.map(p => `
+      <div class="product-card">
+        <img src="${p.img}" alt="${p.name}">
+        <div class="product-info">
+          <div class="product-title">${p.name}</div>
+          <div class="product-price">Rp${p.price.toLocaleString()}</div>
+          <button class="buy-btn" onclick="addToCart('${p.name}', ${p.price})">Tambah ke Keranjang</button>
+        </div>
+      </div>
+    `).join("");
+
+    renderPagination(filtered.length);
+  }
+
+  function renderPagination(totalItems) {
+    const pageCount = Math.ceil(totalItems / itemsPerPage);
+    const pagination = document.getElementById("pagination");
+    pagination.innerHTML = "";
+    for (let i = 1; i <= pageCount; i++) {
+      pagination.innerHTML += `<button onclick="goToPage(${i})">${i}</button>`;
+    }
+  }
+
+  function goToPage(page) {
+    currentPage = page;
+    renderProducts();
+  }
+
+  function addToCart(name, price) {
+    cart.push({ name, price });
+    document.getElementById("cartCount").innerText = cart.length;
+    showToast(`${name} ditambahkan ke keranjang.`);
+  }
+
+  function openCart() {
+    const modal = document.getElementById("cartModal");
+    const cartItems = document.getElementById("cartItems");
+    const cartTotal = document.getElementById("cartTotal");
+
+    let total = 0;
+    cartItems.innerHTML = cart.map((item, i) => {
+      total += item.price;
+      return `
+        <div class="cart-item">
+          ${i + 1}. ${item.name} - Rp${item.price.toLocaleString()}
+          <button onclick="removeFromCart(${i})">Hapus</button>
+        </div>
+      `;
+    }).join("");
+
+    cartTotal.innerHTML = `<strong>Total: Rp${total.toLocaleString()}</strong>`;
+
+    if (cart.length > 0) {
+      const waButton = document.createElement("button");
+      waButton.innerText = "Checkout via WhatsApp";
+      waButton.style = "margin-top: 15px; background-color: #25D366; color: white; padding: 10px; border: none; border-radius: 8px; cursor: pointer; width: 100%;";
+      waButton.onclick = sendToWhatsApp;
+      cartItems.appendChild(waButton);
+    }
+
+    modal.style.display = "block";
+  }
+
+  function closeCart() {
+    document.getElementById("cartModal").style.display = "none";
+  }
+
+  function removeFromCart(index) {
+    const removed = cart.splice(index, 1)[0];
+    document.getElementById("cartCount").innerText = cart.length;
+    showToast(`${removed.name} dihapus dari keranjang.`);
+    openCart();
+  }
+
+  function sendToWhatsApp() {
+    const phoneNumber = "6282143203208"; // Ganti dengan nomor kamu
+    let message = "*Halo! Saya ingin memesan produk berikut:*\n\n";
+    let total = 0;
+    cart.forEach((item, i) => {
+      message += `${i + 1}. ${item.name} - Rp${item.price.toLocaleString()}\n`;
+      total += item.price;
+    });
+    message += `\n*Total: Rp${total.toLocaleString()}*`;
+    const waUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, "_blank");
+  }
+
+  function showToast(text) {
+    const toast = document.getElementById("toast");
+    toast.innerText = text;
+    toast.style.display = "block";
+    setTimeout(() => {
+      toast.style.display = "none";
+    }, 3000);
+  }
+
+  renderProducts();
+</script>
+
+</body>
+</html>
